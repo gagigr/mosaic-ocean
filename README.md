@@ -54,7 +54,7 @@ Run a pipeline declared in YAML:
 ```bash
 mosaic validate pipelines/example_minimal.yaml
 mosaic run      pipelines/example_minimal.yaml
-mosaic prov show out/example.zarr/stac.json
+mosaic prov show out/example_minimal.zarr.stac.json
 ```
 
 Or build it programmatically:
@@ -65,7 +65,7 @@ import mosaic as ms
 pipe = (
     ms.Pipeline(name="demo")
     .add_source(ms.sources.DummySource(variables=["sst", "u10"]))
-    .harmonize(cf_dictionary="configs/cf_baltic.yaml", time_freq="1D")
+    .harmonize(cf_dictionary="configs/cf_baltic.yaml", time_alignment="instantaneous")
     .qc(rules={"sst": {"type": "range", "min": -2.0, "max": 35.0}})
     .export(path="out/demo.zarr")
 )
@@ -139,12 +139,15 @@ pinning.
 ### CS1 — Gulf of Riga coastal upwelling, July 2021
 
 The first case study ships end-to-end. Two reproduction paths are
-supported and share the same processing logic and `mosaic:pipeline_hash`,
-but **not** the same `mosaic:content_hash`: the synthetic fixture path
-(b) is a deterministic stand-in for the live CMEMS/ERA5 inputs, not a
-byte-for-byte replica of them, so its data — and therefore its content
-hash — differs from path (a). Each path is independently reproducible
-across repeated runs (same inputs in, same `mosaic:content_hash` out).
+supported, running the same processing stages (ingest → QC → harmonize →
+fuse → export) and producing the same derived variables — but as two
+distinct YAML pipelines (different source plugins: `cmems`/`era5` for live
+vs. `local_netcdf` for the offline fixture), they have distinct
+`mosaic:pipeline_hash` values, and the synthetic fixture path (b) is a
+stand-in for the live CMEMS/ERA5 inputs rather than a byte-for-byte replica
+of them, so its `mosaic:content_hash` differs from path (a) too. Each path
+is independently reproducible across repeated runs (same inputs in, same
+`mosaic:pipeline_hash` and `mosaic:content_hash` out).
 
 ```bash
 # (a) live data — needs free CMEMS + CDS accounts (see docs/credentials.md)

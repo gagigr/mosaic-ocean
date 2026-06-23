@@ -24,19 +24,27 @@ mosaic prov show out/<name>.zarr.stac.json
   reproduces byte-identical output. This is what
   `tests/test_cs1_gulf_of_riga.py::test_cs1_gulf_of_riga_two_runs_same_content_hash`
   checks.
-- **Same processing logic → same `mosaic:pipeline_hash`**, regardless of which
-  inputs feed it. The hash is derived purely from the YAML spec, so the live
-  and offline-fixture variants of a case study share it even though their
-  data differs.
+- **Same YAML file → same `mosaic:pipeline_hash`**, regardless of which
+  inputs feed it. The hash is derived from the *entire* canonical spec
+  (domain, source plugins and params, harmonize/QC/fuse/export config), not
+  just the conceptual processing steps — so it changes whenever any of that
+  changes, including which source plugin is used or where the output is
+  written.
 
 ## What is *not* guaranteed
 
-- **`mosaic:content_hash` is not shared between live and offline-fixture
-  runs of the same case study.** A fixture is a deterministic, schema-compatible
-  stand-in for the live upstream product, not a byte-for-byte replica of it.
-  Its job is to prove the *declared processing path executes deterministically
-  without credentials* — not to reproduce live-data diagnostics. For CS1
-  (Gulf of Riga, July 2021) specifically:
+- **Neither `mosaic:pipeline_hash` nor `mosaic:content_hash` is shared
+  between live and offline-fixture runs of the same case study.** The two
+  paths are declared as separate YAML files with different source plugins
+  (e.g. `cmems`/`era5` for live vs. `local_netcdf` for the offline fixture
+  in CS1) and different export paths, so `mosaic:pipeline_hash` already
+  differs before any data is read. The offline fixture is a deterministic,
+  schema-compatible stand-in for the live upstream product, not a
+  byte-for-byte replica of it, so its data — and therefore its
+  `mosaic:content_hash` — differs too. Its job is to prove the *declared
+  processing path executes deterministically without credentials*, not to
+  reproduce live-data diagnostics. For CS1 (Gulf of Riga, July 2021)
+  specifically:
   - the live CMEMS/ERA5 workflow reports **183** SST-anomaly cells and an
     **empty (0-cell)** pixel-wise SST–wind intersection on 2021-07-16;
   - the offline fixture is only required to produce a non-empty SST-led mask
@@ -77,6 +85,9 @@ python scripts/fetch_cs1_gulf_of_riga.py populate-fixtures
 mosaic run tests/fixtures/cs1_gulf_of_riga_offline.yaml
 ```
 
-Both paths share `mosaic:pipeline_hash`; only path (a) is expected to match
-the live diagnostics reported in the paper. See `docs/datasets.md` for
-dataset identifiers, license terms and bbox/time bounds.
+Both paths run the same processing stages (ingest → QC → harmonize → fuse →
+export) and produce the same derived variables, but as distinct YAML
+pipelines they have distinct `mosaic:pipeline_hash` and `mosaic:content_hash`
+values; only path (a) is expected to match the live diagnostics reported in
+the paper. See `docs/datasets.md` for dataset identifiers, license terms and
+bbox/time bounds.
