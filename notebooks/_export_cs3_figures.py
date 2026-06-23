@@ -42,10 +42,10 @@ def main() -> None:
     for ax, t in zip(axes, panel_days):
         sic = ds["sea_ice_area_fraction"].isel(time=t)
         pcm = ax.pcolormesh(
-            sic.lon, sic.lat, sic.values,
+            sic.longitude, sic.latitude, sic.values,
             cmap="Blues_r", vmin=0.0, vmax=1.0, shading="auto",
         )
-        ax.contour(sic.lon, sic.lat, sic.values, levels=[0.15, 0.5], colors="k", linewidths=0.6)
+        ax.contour(sic.longitude, sic.latitude, sic.values, levels=[0.15, 0.5], colors="k", linewidths=0.6)
         ax.set_title(str(ds["time"].isel(time=t).values)[:10])
         ax.set_xlabel("lon (°E)")
     axes[0].set_ylabel("lat (°N)")
@@ -59,10 +59,10 @@ def main() -> None:
     for ax, t in zip(axes, panel_days):
         a = ds["sic_anomaly"].isel(time=t)
         pcm = ax.pcolormesh(
-            a.lon, a.lat, a.values,
+            a.longitude, a.latitude, a.values,
             cmap="RdBu", vmin=-amax, vmax=amax, shading="auto",
         )
-        ax.contour(a.lon, a.lat, a.values, levels=[-0.3], colors="k", linewidths=0.6)
+        ax.contour(a.longitude, a.latitude, a.values, levels=[-0.3], colors="k", linewidths=0.6)
         ax.set_title(str(ds["time"].isel(time=t).values)[:10])
         ax.set_xlabel("lon (°E)")
     axes[0].set_ylabel("lat (°N)")
@@ -74,7 +74,7 @@ def main() -> None:
     fig, axes = plt.subplots(1, 4, figsize=(13, 3.4), sharey=True)
     for ax, t in zip(axes, panel_days):
         m = ds["melt_pond_proxy"].isel(time=t).astype("uint8")
-        ax.pcolormesh(m.lon, m.lat, m.values, cmap="Greys", vmin=0, vmax=1, shading="auto")
+        ax.pcolormesh(m.longitude, m.latitude, m.values, cmap="Greys", vmin=0, vmax=1, shading="auto")
         ax.set_title(str(ds["time"].isel(time=t).values)[:10])
         ax.set_xlabel("lon (°E)")
     axes[0].set_ylabel("lat (°N)")
@@ -83,14 +83,14 @@ def main() -> None:
 
     # --- Total ice area + flagged-cell time series --------------------
     # area per cell ~ d_lat * d_lon * cos(lat) * 111^2 km^2
-    lat = ds["sea_ice_area_fraction"].lat.values
-    dlon = float(np.diff(ds["sea_ice_area_fraction"].lon.values).mean())
+    lat = ds["sea_ice_area_fraction"].latitude.values
+    dlon = float(np.diff(ds["sea_ice_area_fraction"].longitude.values).mean())
     dlat = float(np.diff(lat).mean())
     cell_area = (dlon * 111.0) * (dlat * 111.0) * np.cos(np.deg2rad(lat))[:, None]
     sic_area_km2 = (
         ds["sea_ice_area_fraction"] * cell_area[None, :, :]
-    ).sum(dim=("lat", "lon")).values * 1e-6  # in million km²
-    flagged = ds["melt_pond_proxy"].astype("uint8").sum(dim=("lat", "lon")).values
+    ).sum(dim=("latitude", "longitude")).values * 1e-6  # in million km²
+    flagged = ds["melt_pond_proxy"].astype("uint8").sum(dim=("latitude", "longitude")).values
     fig, ax1 = plt.subplots(figsize=(7.5, 3.6))
     ax2 = ax1.twinx()
     ax1.plot(ds["time"].values, sic_area_km2, color="tab:blue", label="ice area (10⁶ km²)")

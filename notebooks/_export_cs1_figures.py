@@ -50,7 +50,7 @@ def main() -> None:
     for ax, t in zip(axes, panel_days):
         sst = sst_c.isel(time=t)
         pcm = ax.pcolormesh(
-            sst.lon, sst.lat, sst.values,
+            sst.longitude, sst.latitude, sst.values,
             cmap="RdYlBu_r", vmin=vmin, vmax=vmax, shading="auto",
         )
         ax.set_title(str(ds["time"].isel(time=t).values)[:10])
@@ -66,10 +66,10 @@ def main() -> None:
     for ax, t in zip(axes, panel_days):
         ano = ds["sst_spatial_anomaly"].isel(time=t)
         pcm = ax.pcolormesh(
-            ano.lon, ano.lat, ano.values,
+            ano.longitude, ano.latitude, ano.values,
             cmap="RdBu_r", vmin=-ano_max, vmax=ano_max, shading="auto",
         )
-        ax.contour(ano.lon, ano.lat, ano.values, levels=[-2.0], colors="k", linewidths=0.6)
+        ax.contour(ano.longitude, ano.latitude, ano.values, levels=[-2.0], colors="k", linewidths=0.6)
         ax.set_title(str(ds["time"].isel(time=t).values)[:10])
         ax.set_xlabel("lon (°E)")
     axes[0].set_ylabel("lat (°N)")
@@ -84,7 +84,7 @@ def main() -> None:
     mask_sst = ds["upwelling_mask_sst"].isel(time=t16_idx).astype("uint8")
 
     fig, ax = plt.subplots(figsize=(6, 5))
-    ax.pcolormesh(mask_sst.lon, mask_sst.lat, mask_sst.values,
+    ax.pcolormesh(mask_sst.longitude, mask_sst.latitude, mask_sst.values,
                   cmap="Greys", vmin=0, vmax=1, shading="auto")
     ax.set_title("CS1 — SST-only upwelling mask, 16 July 2021")
     ax.set_xlabel("lon (°E)")
@@ -99,9 +99,9 @@ def main() -> None:
     # left: spatial anomaly with SST-mask contour
     ax = axes[0]
     ano_lim = float(np.abs(ano_16).max())
-    pcm = ax.pcolormesh(ano_16.lon, ano_16.lat, ano_16.values,
+    pcm = ax.pcolormesh(ano_16.longitude, ano_16.latitude, ano_16.values,
                         cmap="RdBu_r", vmin=-ano_lim, vmax=ano_lim, shading="auto")
-    ax.contour(mask_sst.lon, mask_sst.lat, mask_sst.values, levels=[0.5],
+    ax.contour(mask_sst.longitude, mask_sst.latitude, mask_sst.values, levels=[0.5],
                colors="k", linewidths=1.0)
     fig.colorbar(pcm, ax=ax, label="SST anomaly (K)")
     ax.set_title("Spatial SST anomaly + SST-mask contour")
@@ -109,9 +109,9 @@ def main() -> None:
     ax.set_ylabel("lat (°N)")
     # right: wind speed with SST-mask contour
     ax = axes[1]
-    pcm2 = ax.pcolormesh(wsp_16.lon, wsp_16.lat, wsp_16.values,
+    pcm2 = ax.pcolormesh(wsp_16.longitude, wsp_16.latitude, wsp_16.values,
                          cmap="YlOrRd", shading="auto")
-    ax.contour(mask_sst.lon, mask_sst.lat, mask_sst.values, levels=[0.5],
+    ax.contour(mask_sst.longitude, mask_sst.latitude, mask_sst.values, levels=[0.5],
                colors="k", linewidths=1.0)
     fig.colorbar(pcm2, ax=ax, label="wind speed (m s⁻¹)")
     ax.set_title("ERA5 daily mean wind speed + SST-mask contour")
@@ -121,8 +121,8 @@ def main() -> None:
     _save(fig, "fig_cs1_riga_mask_comparison_2021-07-16_v2")
 
     # --- Flagged-cells time series ------------------------------------
-    sst_counts = ds["upwelling_mask_sst"].astype("uint8").sum(dim=("lat", "lon")).values
-    wind_counts = ds["upwelling_mask_sst_wind"].astype("uint8").sum(dim=("lat", "lon")).values
+    sst_counts = ds["upwelling_mask_sst"].astype("uint8").sum(dim=("latitude", "longitude")).values
+    wind_counts = ds["upwelling_mask_sst_wind"].astype("uint8").sum(dim=("latitude", "longitude")).values
     times = ds["time"].values
 
     fig, ax = plt.subplots(figsize=(8, 3.6))

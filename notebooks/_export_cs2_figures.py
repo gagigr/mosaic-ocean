@@ -55,12 +55,12 @@ def main() -> None:
         u = ds["eastward_wind"].isel(time=t)
         v = ds["northward_wind"].isel(time=t)
         pcm = ax.pcolormesh(
-            p.lon, p.lat, p.values, cmap="viridis_r",
+            p.longitude, p.latitude, p.values, cmap="viridis_r",
             vmin=pmin, vmax=pmax, shading="auto",
         )
-        ax.contour(p.lon, p.lat, p.values, levels=[980, 990, 1000], colors="white", linewidths=0.5)
+        ax.contour(p.longitude, p.latitude, p.values, levels=[980, 990, 1000], colors="white", linewidths=0.5)
         ax.quiver(
-            u.lon[::step], u.lat[::step],
+            u.longitude[::step], u.latitude[::step],
             u.values[::step, ::step], v.values[::step, ::step],
             scale=300, color="k", alpha=0.55, width=0.004,
         )
@@ -79,7 +79,7 @@ def main() -> None:
     vmin, vmax = float(sst.min()), float(sst.max())
     for ax, t in zip(axes, panel_days):
         pcm = ax.pcolormesh(
-            sst.lon, sst.lat, sst.isel(time=t).values,
+            sst.longitude, sst.latitude, sst.isel(time=t).values,
             cmap="RdYlBu_r", vmin=vmin, vmax=vmax, shading="auto",
         )
         ax.plot(track["LON"], track["LAT"], "k-", lw=0.8, alpha=0.6)
@@ -93,8 +93,8 @@ def main() -> None:
 
     # --- Hurricane zone mask + storm-intensity time series ------------
     fig, ax = plt.subplots(figsize=(7.5, 4.0))
-    intensity_max = ds["storm_intensity"].max(dim=("lat", "lon"))
-    flagged_per_day = ds["hurricane_zone"].astype("uint8").sum(dim=("lat", "lon"))
+    intensity_max = ds["storm_intensity"].max(dim=("latitude", "longitude"))
+    flagged_per_day = ds["hurricane_zone"].astype("uint8").sum(dim=("latitude", "longitude"))
     ax.plot(intensity_max.time, intensity_max.values, color="tab:blue",
             label="max storm_intensity (hPa)")
     ax2 = ax.twinx()
@@ -112,7 +112,7 @@ def main() -> None:
     fig, axes = plt.subplots(1, 4, figsize=(13, 3.4), sharey=True)
     for ax, t in zip(axes, panel_days):
         m = ds["hurricane_zone"].isel(time=t).astype("uint8")
-        ax.pcolormesh(m.lon, m.lat, m.values, cmap="Greys", vmin=0, vmax=1, shading="auto")
+        ax.pcolormesh(m.longitude, m.latitude, m.values, cmap="Greys", vmin=0, vmax=1, shading="auto")
         ax.plot(track["LON"], track["LAT"], "r-", lw=0.8, alpha=0.7)
         ax.plot(track["LON"], track["LAT"], "r.", ms=2)
         ax.set_title(str(ds["time"].isel(time=t).values)[:10])
