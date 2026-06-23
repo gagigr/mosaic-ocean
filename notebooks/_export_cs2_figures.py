@@ -54,7 +54,7 @@ def main() -> None:
         p = ds["air_pressure_at_mean_sea_level"].isel(time=t)
         u = ds["eastward_wind"].isel(time=t)
         v = ds["northward_wind"].isel(time=t)
-        pcm = ax.pcolormesh(
+        ax.pcolormesh(
             p.longitude, p.latitude, p.values, cmap="viridis_r",
             vmin=pmin, vmax=pmax, shading="auto",
         )
@@ -66,28 +66,30 @@ def main() -> None:
         )
         ax.plot(track["LON"], track["LAT"], "r-", lw=1.0, alpha=0.8)
         ax.plot(track["LON"], track["LAT"], "r.", ms=3)
-        ax.set_title(str(ds["time"].isel(time=t).values)[:10])
+        ax.set_title(pd.to_datetime(ds["time"].isel(time=t).values).strftime("%Y-%m-%d"))
         ax.set_xlabel("lon (°E)")
     axes[0].set_ylabel("lat (°N)")
-    fig.colorbar(pcm, ax=axes, fraction=0.025, pad=0.02, label="MSLP (hPa)")
+    sm = plt.cm.ScalarMappable(norm=plt.Normalize(vmin=pmin, vmax=pmax), cmap="viridis_r")
+    fig.colorbar(sm, ax=axes, fraction=0.025, pad=0.02, label="MSLP (hPa)")
     fig.suptitle("CS2 — MSLP + 10 m wind, Ida-like landfall (Aug 26 — Sep 2, 2021)", y=1.03)
     _save(fig, "fig_cs2_mslp_wind")
 
     # --- SST cold-wake panels -----------------------------------------
     fig, axes = plt.subplots(1, 4, figsize=(13, 3.4), sharey=True)
-    sst = ds["sea_surface_temperature"] - 273.15
-    vmin, vmax = float(sst.min()), float(sst.max())
+    sst_k = ds["sea_surface_temperature"]
+    vmin, vmax = float(sst_k.min()) - 273.15, float(sst_k.max()) - 273.15
     for ax, t in zip(axes, panel_days):
-        pcm = ax.pcolormesh(
-            sst.longitude, sst.latitude, sst.isel(time=t).values,
+        ax.pcolormesh(
+            sst_k.longitude, sst_k.latitude, sst_k.isel(time=t).values - 273.15,
             cmap="RdYlBu_r", vmin=vmin, vmax=vmax, shading="auto",
         )
         ax.plot(track["LON"], track["LAT"], "k-", lw=0.8, alpha=0.6)
         ax.plot(track["LON"], track["LAT"], "k.", ms=2)
-        ax.set_title(str(ds["time"].isel(time=t).values)[:10])
+        ax.set_title(pd.to_datetime(ds["time"].isel(time=t).values).strftime("%Y-%m-%d"))
         ax.set_xlabel("lon (°E)")
     axes[0].set_ylabel("lat (°N)")
-    fig.colorbar(pcm, ax=axes, fraction=0.025, pad=0.02, label="SST (°C)")
+    sm = plt.cm.ScalarMappable(norm=plt.Normalize(vmin=vmin, vmax=vmax), cmap="RdYlBu_r")
+    fig.colorbar(sm, ax=axes, fraction=0.025, pad=0.02, label="SST (°C)")
     fig.suptitle("CS2 — SST with cold wake along the storm track", y=1.03)
     _save(fig, "fig_cs2_sst_wake")
 
@@ -115,7 +117,7 @@ def main() -> None:
         ax.pcolormesh(m.longitude, m.latitude, m.values, cmap="Greys", vmin=0, vmax=1, shading="auto")
         ax.plot(track["LON"], track["LAT"], "r-", lw=0.8, alpha=0.7)
         ax.plot(track["LON"], track["LAT"], "r.", ms=2)
-        ax.set_title(str(ds["time"].isel(time=t).values)[:10])
+        ax.set_title(pd.to_datetime(ds["time"].isel(time=t).values).strftime("%Y-%m-%d"))
         ax.set_xlabel("lon (°E)")
     axes[0].set_ylabel("lat (°N)")
     fig.suptitle("CS2 — hurricane zone (wind > 17 m/s AND MSLP < 980 hPa)", y=1.03)

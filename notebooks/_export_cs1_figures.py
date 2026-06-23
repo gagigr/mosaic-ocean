@@ -45,41 +45,43 @@ def main() -> None:
 
     # --- SST evolution ------------------------------------------------
     fig, axes = plt.subplots(1, 4, figsize=(13, 3.4), sharey=True)
-    sst_c = ds["sea_surface_temperature"] - 273.15
-    vmin, vmax = float(sst_c.min()), float(sst_c.max())
+    sst_k = ds["sea_surface_temperature"]
+    vmin, vmax = float(sst_k.min()) - 273.15, float(sst_k.max()) - 273.15
     for ax, t in zip(axes, panel_days):
-        sst = sst_c.isel(time=t)
-        pcm = ax.pcolormesh(
-            sst.longitude, sst.latitude, sst.values,
+        sst = sst_k.isel(time=t)
+        ax.pcolormesh(
+            sst.longitude, sst.latitude, sst.values - 273.15,
             cmap="RdYlBu_r", vmin=vmin, vmax=vmax, shading="auto",
         )
-        ax.set_title(str(ds["time"].isel(time=t).values)[:10])
+        ax.set_title(pd.to_datetime(ds["time"].isel(time=t).values).strftime("%Y-%m-%d"))
         ax.set_xlabel("lon (°E)")
     axes[0].set_ylabel("lat (°N)")
-    fig.colorbar(pcm, ax=axes, fraction=0.025, pad=0.02, label="SST (°C)")
+    sm = plt.cm.ScalarMappable(norm=plt.Normalize(vmin=vmin, vmax=vmax), cmap="RdYlBu_r")
+    fig.colorbar(sm, ax=axes, fraction=0.025, pad=0.02, label="SST (°C)")
     fig.suptitle("CS1 — Gulf of Riga SST (CMEMS L4, harmonised)", y=1.02)
     _save(fig, "fig_cs1_riga_sst_evolution")
 
     # --- Spatial SST anomaly ------------------------------------------
     fig, axes = plt.subplots(1, 4, figsize=(13, 3.4), sharey=True)
-    ano_max = float(np.abs(ds["sst_spatial_anomaly"]).max())
+    ano_max = float(np.nanmax(np.abs(ds["sst_spatial_anomaly"].values)))
     for ax, t in zip(axes, panel_days):
         ano = ds["sst_spatial_anomaly"].isel(time=t)
-        pcm = ax.pcolormesh(
+        ax.pcolormesh(
             ano.longitude, ano.latitude, ano.values,
             cmap="RdBu_r", vmin=-ano_max, vmax=ano_max, shading="auto",
         )
         ax.contour(ano.longitude, ano.latitude, ano.values, levels=[-2.0], colors="k", linewidths=0.6)
-        ax.set_title(str(ds["time"].isel(time=t).values)[:10])
+        ax.set_title(pd.to_datetime(ds["time"].isel(time=t).values).strftime("%Y-%m-%d"))
         ax.set_xlabel("lon (°E)")
     axes[0].set_ylabel("lat (°N)")
-    fig.colorbar(pcm, ax=axes, fraction=0.025, pad=0.02, label="SST anomaly (K)")
+    sm = plt.cm.ScalarMappable(norm=plt.Normalize(vmin=-ano_max, vmax=ano_max), cmap="RdBu_r")
+    fig.colorbar(sm, ax=axes, fraction=0.025, pad=0.02, label="SST anomaly (K)")
     fig.suptitle("CS1 — Spatial SST anomaly (SST − daily median)", y=1.02)
     _save(fig, "fig_cs1_riga_spatial_anomaly_2021-07-16")
 
     # --- SST-only upwelling mask on 2021-07-16 ------------------------
     t16_idx = int(np.argmin(np.abs(
-        pd.to_datetime(ds["time"].values) - pd.Timestamp("2021-07-16")
+        pd.to_datetime(ds["time"].values) - np.datetime64("2021-07-16")
     )))
     mask_sst = ds["upwelling_mask_sst"].isel(time=t16_idx).astype("uint8")
 
@@ -98,7 +100,7 @@ def main() -> None:
     fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharey=True)
     # left: spatial anomaly with SST-mask contour
     ax = axes[0]
-    ano_lim = float(np.abs(ano_16).max())
+    ano_lim = float(np.nanmax(np.abs(ano_16.values)))
     pcm = ax.pcolormesh(ano_16.longitude, ano_16.latitude, ano_16.values,
                         cmap="RdBu_r", vmin=-ano_lim, vmax=ano_lim, shading="auto")
     ax.contour(mask_sst.longitude, mask_sst.latitude, mask_sst.values, levels=[0.5],

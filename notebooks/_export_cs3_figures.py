@@ -6,6 +6,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import xarray as xr
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -41,32 +42,34 @@ def main() -> None:
     fig, axes = plt.subplots(1, 4, figsize=(13, 3.4), sharey=True)
     for ax, t in zip(axes, panel_days):
         sic = ds["sea_ice_area_fraction"].isel(time=t)
-        pcm = ax.pcolormesh(
+        ax.pcolormesh(
             sic.longitude, sic.latitude, sic.values,
             cmap="Blues_r", vmin=0.0, vmax=1.0, shading="auto",
         )
         ax.contour(sic.longitude, sic.latitude, sic.values, levels=[0.15, 0.5], colors="k", linewidths=0.6)
-        ax.set_title(str(ds["time"].isel(time=t).values)[:10])
+        ax.set_title(pd.to_datetime(ds["time"].isel(time=t).values).strftime("%Y-%m-%d"))
         ax.set_xlabel("lon (°E)")
     axes[0].set_ylabel("lat (°N)")
-    fig.colorbar(pcm, ax=axes, fraction=0.025, pad=0.02, label="SIC (1)")
+    sm = plt.cm.ScalarMappable(norm=plt.Normalize(vmin=0.0, vmax=1.0), cmap="Blues_r")
+    fig.colorbar(sm, ax=axes, fraction=0.025, pad=0.02, label="SIC (1)")
     fig.suptitle("CS3 — Arctic sea-ice concentration, Sept 2012", y=1.03)
     _save(fig, "fig_cs3_sic_evolution")
 
     # --- SIC anomaly --------------------------------------------------
     fig, axes = plt.subplots(1, 4, figsize=(13, 3.4), sharey=True)
-    amax = float(np.abs(ds["sic_anomaly"]).max())
+    amax = float(np.nanmax(np.abs(ds["sic_anomaly"].values)))
     for ax, t in zip(axes, panel_days):
         a = ds["sic_anomaly"].isel(time=t)
-        pcm = ax.pcolormesh(
+        ax.pcolormesh(
             a.longitude, a.latitude, a.values,
             cmap="RdBu", vmin=-amax, vmax=amax, shading="auto",
         )
         ax.contour(a.longitude, a.latitude, a.values, levels=[-0.3], colors="k", linewidths=0.6)
-        ax.set_title(str(ds["time"].isel(time=t).values)[:10])
+        ax.set_title(pd.to_datetime(ds["time"].isel(time=t).values).strftime("%Y-%m-%d"))
         ax.set_xlabel("lon (°E)")
     axes[0].set_ylabel("lat (°N)")
-    fig.colorbar(pcm, ax=axes, fraction=0.025, pad=0.02, label="SIC anomaly (1)")
+    sm = plt.cm.ScalarMappable(norm=plt.Normalize(vmin=-amax, vmax=amax), cmap="RdBu")
+    fig.colorbar(sm, ax=axes, fraction=0.025, pad=0.02, label="SIC anomaly (1)")
     fig.suptitle("CS3 — SIC anomaly (Sept 2012 minus 1991-2020 climatology)", y=1.03)
     _save(fig, "fig_cs3_sic_anomaly")
 
@@ -75,7 +78,7 @@ def main() -> None:
     for ax, t in zip(axes, panel_days):
         m = ds["melt_pond_proxy"].isel(time=t).astype("uint8")
         ax.pcolormesh(m.longitude, m.latitude, m.values, cmap="Greys", vmin=0, vmax=1, shading="auto")
-        ax.set_title(str(ds["time"].isel(time=t).values)[:10])
+        ax.set_title(pd.to_datetime(ds["time"].isel(time=t).values).strftime("%Y-%m-%d"))
         ax.set_xlabel("lon (°E)")
     axes[0].set_ylabel("lat (°N)")
     fig.suptitle("CS3 — melt-pond proxy (SIC < 0.5 AND t2m > 273.15 K)", y=1.03)
