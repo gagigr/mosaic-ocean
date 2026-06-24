@@ -207,7 +207,7 @@ release) and the accompanying paper. See `CITATION.cff`.
 ## Contributing
 
 Issues and PRs welcome on
-<https://github.com/gagigr/mosaic-ocean/issues>.
+<https://github.com/Nedel124/mosaic-ocean/issues>.
 
 ## Funding & acknowledgments
 
